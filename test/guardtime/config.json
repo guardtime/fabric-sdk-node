@@ -1,0 +1,65 @@
+{
+   "chainName":"mychannel",
+   "chaincodeID":"mycc",
+   "chaincodeVersion":"v0",
+   "channelID":"myc1",
+   "channelFile_old":"../fabric-sdk-node/test/fixtures/channel/mychannel.tx",
+   "channelFile":"./test/fixtures/channel/mychannel.tx",
+   "goPath_old":"../../test/fixtures",
+   "goPath":"../../test/fixtures",
+   "chaincodePath":"github.com/example_cc",
+   "keyValueStore_old":"/tmp/fabric-client-kvs",
+   "keyValueStore":"/tmp/hfc-test-kvs_peerOrg1",
+   "waitTime":"30000",
+   "mspname":"Org1MSP",
+   "mspid_COMMENTED_OUT":"SampleSingleMSPSolo",
+   "caserver":{
+      "ca_url":"http://localhost:7054"
+   },
+   "orderer":{
+      "orderer_url": "grpcs://localhost:7050",
+      "hostname": "orderer0",
+      "tls_cacerts_old": "../fabric-sdk-node/test/fixtures/tls/orderer/ca-cert.pem",
+      "tls_cacerts": "test/fixtures/tls/orderer/ca-cert.pem"
+   },
+   "peers":[
+      {
+         "peer_url":"grpcs://localhost:7051",
+         "event_url":"grpcs://localhost:7053",
+         "hostname": "peer0",
+         "tls_cacerts":"test/fixtures/tls/peers/peer0/ca-cert.pem"
+      }
+   ],
+   "users":[
+      {
+         "username":"admin",
+         "secret":"adminpw"
+      }
+   ],
+   "dockerfile_contents": "from hyperledger/fabric-ccenv\n COPY . $GOPATH/src/build-chaincode/\n  WORKDIR $GOPATH\n\n RUN go install build-chaincode && mv $GOPATH/bin/build-chaincode $GOPATH/bin/%s",
+   "deployRequest":{
+      "functionName":"init",
+      "args":[
+         "a",
+         "100",
+         "b",
+         "200"
+      ]
+   },
+   "invokeRequest":{
+      "functionName":"invoke",
+      "args":[
+         "move",
+         "a",
+         "b",
+         "100"
+      ]
+   },
+   "queryRequest":{
+      "functionName":"invoke",
+      "args":[
+         "query",
+         "b"
+      ]
+   }
+}

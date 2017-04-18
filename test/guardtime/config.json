@@ -14,7 +14,7 @@
    "mspname":"Org1MSP",
    "mspid_COMMENTED_OUT":"SampleSingleMSPSolo",
    "caserver":{
-      "ca_url":"http://localhost:7054"
+      "ca_url":"https://localhost:7054"
    },
    "orderer":{
       "orderer_url": "grpcs://localhost:7050",

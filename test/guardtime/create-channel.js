@@ -14,11 +14,13 @@ var util = require('util');
 var config = require('./config.json');
 var helper = require('./helper.js');
 
-logger.setLevel('INFO');
+logger.setLevel('DEBUG');
 
+var client;
 var chain;
 var user;
 var peers;
+var orderer;
 var cleanup;
 
 if (!process.env.GOPATH){
@@ -27,10 +29,12 @@ if (!process.env.GOPATH){
 
 logger.debug("GETTING STARTED");
 
-return helper.init().then( function(args) {
+return helper.init(false).then( function(args) {
+	client = args.client;
 	chain = args.chain;
 	user = args.user;
 	peers = args.peers;
+	orderer = args.orderer;
 	cleanup = args.cleanup;
 	logger.debug('Reading the channel file.');
 	logger.debug('channelFile '+config.channelFile);
@@ -39,36 +43,26 @@ return helper.init().then( function(args) {
 	
 	logger.debug('Successfully read the channel file.');
 	var request = {
-		envelope : data
+		envelope : data,
+		name : config.chainName,
+		orderer : orderer
 	};
 	// send to orderer
 	logger.debug('Creating the channel.');
-	return chain.createChannel(request);
+	return client.createChannel(request);
 
-}).then( function(response) {
-
-	if (response && response.status === 'SUCCESS') {
-		logger.info('Successfully created the channel "'+config.chainName+'".');
-		return helper.sleep(2000);
-	} else {
-		throw new Error('Failed to get the proposal response.');
-	}
-	
-}).then( function() {
-	var nonce = utils.getNonce();
-	var txId = chain.buildTransactionID(nonce, user);
-	var request = {
-		targets : peers,
-		txId : 	txId,
-		nonce : nonce
-	};
-	return chain.joinChannel(request);
-}).then( function(results) {
-	logger.debug(util.format('Join Channel R E S P O N S E : %j', results));
-	if(results[0] && results[0].response && results[0].response.status == 200) {
-		logger.info('Successfully joined peers to the channel');
-	} else {
-		throw new Error('Failed to join channel');
+}).then( function(chainResult) {
+	chain = chainResult;
+	if(chain){
+		var testOrderers = chain.getOrderers();
+		if( testOrderers ) {
+			var testOrderer = testOrderers[0];
+			if( testOrderer === orderer ){
+				logger.info('Successfully created the channel "'+config.chainName+'".');
+			}else{
+				throw new Error('Chain did not have the orderer.');
+			}
+		}
 	}
 }).catch( function(err) {
 	logger.error(err.stack ? err.stack : err);

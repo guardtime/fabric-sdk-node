@@ -42,6 +42,7 @@ services:
   peer:
     container_name: peer0
     image: hyperledger/fabric-peer
+    env_file: ../../../.ksi.env
     environment:
       - CORE_LOGGING_LEVEL=DEBUG
       - CORE_NEXT=true

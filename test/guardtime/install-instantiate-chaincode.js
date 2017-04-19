@@ -18,6 +18,7 @@ logger.setLevel('INFO');
 
 var chain;
 var cleanup;
+var client;
 
 if (!process.env.GOPATH){
 	process.env.GOPATH = config.goPath;
@@ -28,11 +29,12 @@ logger.debug("GETTING STARTED");
 helper.init().then( function(args) {
 	chain = args.chain;
 	cleanup = args.cleanup;
+	client = args.client;
 	helper.setupChaincodeDeploy();
 	logger.debug('building install proposal.');
 	// Snip begin
 	var nonce = utils.getNonce();
-	var txId = chain.buildTransactionID(nonce, args.user);
+	var txId = hfc.buildTransactionID(nonce, args.user);
 
 	logger.info('Registering for install events from '+txId+'.');
 	args.events.forEach((eh) => {
@@ -51,7 +53,7 @@ helper.init().then( function(args) {
 		nonce: nonce
 	};
 	logger.debug('Sending install proposal.');
-	return chain.sendInstallProposal(request).then(function(results){
+	return client.installChaincode(request).then(function(results){
 		logger.debug('Acquired endorsement for the install proposal.');
 		args.results = results;
 		return args;
@@ -75,7 +77,7 @@ helper.init().then( function(args) {
 }).then( function(args) {
 	logger.debug('The chain was initialized.');
 	var nonce = utils.getNonce();
-	var txId = chain.buildTransactionID(nonce, args.user);
+	var txId = hfc.buildTransactionID(nonce, args.user);
 
 	logger.info('Registering for instantiation events from '+txId+'.');
 	args.events.forEach((eh) => {

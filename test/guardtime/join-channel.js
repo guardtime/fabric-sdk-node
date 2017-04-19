@@ -14,7 +14,7 @@ var util = require('util');
 var config = require('./config.json');
 var helper = require('./helper.js');
 
-logger.setLevel('DEBUG');
+logger.setLevel('INFO');
 
 var client;
 var chain;

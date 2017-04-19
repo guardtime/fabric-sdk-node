@@ -33,7 +33,7 @@ var config = require('./config.json');
 
 var fs = require('fs');
 
-logger.setLevel('DEBUG');
+logger.setLevel('INFO');
 
 var	tlsOptions = {
 	trustedRoots: [],
@@ -171,6 +171,7 @@ module.exports.init = function(createChain) {
 		logger.debug('INIT');
 
 		var client = new hfc();
+		hfc.setConfigSetting('request-timeout', 30000);
 		var chain;
 		if( createChain ){
 			chain = client.newChain(config.chainName);

@@ -30,7 +30,7 @@ helper.init().then( function(args) {
 	logger.debug('Successfully obtained enrolled user to deploy the chaincode');
 
 	var nonce = utils.getNonce();
-	var txId = args.chain.buildTransactionID(nonce, args.user);
+	var txId = hfc.buildTransactionID(nonce, args.user);
 	cleanup = args.cleanup;
 
 	logger.info('Registering for transaction events from '+txId+'.');
@@ -47,8 +47,7 @@ helper.init().then( function(args) {
 		eh.registerBlockEvent( (block) => {
 			logger.info('Block ',block.header.number,' came back with hash: ',block.header.data_hash);
 			var metadata = block.metadata.metadata;
-			logger.info('   and metadata: ',metadata);
-			logger.info('   metadata length is '+metadata.length);
+			logger.info('   signature : ',metadata[4]);
 		});
 	});
 

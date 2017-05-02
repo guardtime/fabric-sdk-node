@@ -47,7 +47,10 @@ helper.init().then( function(args) {
 		eh.registerBlockEvent( (block) => {
 			logger.info('Block ',block.header.number,' came back with hash: ',block.header.data_hash);
 			var metadata = block.metadata.metadata;
-			logger.info('   signature : ',metadata[4]);
+			var signature = metadata[4];
+			logger.info('   signature : ', signature );
+			var filename = 'block-'+block.header.number+'.ksi';
+			helper.saveSignature( filename, signature );
 		});
 	});
 

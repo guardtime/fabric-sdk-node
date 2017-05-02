@@ -149,8 +149,21 @@ var readFile = function(path){
 	});
 };
 
+var saveSignature = function( filename, content ){
+	return new Promise( function(resolve, reject){
+		fs.writeFile( filename, content, function(err){
+			if( err ){
+				reject(err);
+			} else {
+				resolve(filename);
+			}
+		});
+	});
+};
+
 module.exports.readFile = readFile;
 module.exports.getSubmitter = getSubmitter;
+module.exports.saveSignature = saveSignature;
 
 // temporarily set $GOPATH to the test fixture folder
 module.exports.setupChaincodeDeploy = function() {

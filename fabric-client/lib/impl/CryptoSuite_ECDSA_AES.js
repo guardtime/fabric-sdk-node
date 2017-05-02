@@ -282,7 +282,7 @@ var CryptoSuite_ECDSA_AES = class extends api.CryptoSuite {
 		var self = this;
 		return new Promise((resolve, reject) => {
 			if (self._store === null) {
-				logger.info(util.format('This class requires a CryptoKeyStore to save keys, using the store: %j', self._storeConfig));
+				logger.debug(util.format('This class requires a CryptoKeyStore to save keys, using the store: %j', self._storeConfig));
 
 				CKS(self._storeConfig.superClass, self._storeConfig.opts)
 				.then((ks) => {

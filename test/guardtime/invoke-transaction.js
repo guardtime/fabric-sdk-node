@@ -17,6 +17,7 @@ var util = require('util');
 var config = require('./config.json');
 var helper = require('./helper.js');
 var cleanup;
+var signaturePromise;
 
 logger.setLevel('INFO');
 
@@ -33,24 +34,19 @@ helper.init().then( function(args) {
 	var txId = hfc.buildTransactionID(nonce, args.user);
 	cleanup = args.cleanup;
 
-	logger.info('Registering for transaction events from '+txId+'.');
-	args.events.forEach((eh) => {
-		eh.registerTxEvent(txId.toString(), (tx, code) => {
-			logger.info('Transaction event came back with code: ',code);
-			logger.info('tx: ', tx);
-			eh.unregisterTxEvent(txId);
-		});
-	});
-
-	logger.info('Registering for block events.');
-	args.events.forEach((eh) => {
-		eh.registerBlockEvent( (block) => {
-			logger.info('Block ',block.header.number,' came back with hash: ',block.header.data_hash);
-			var metadata = block.metadata.metadata;
-			var signature = metadata[4];
-			logger.info('   signature : ', signature );
-			var filename = 'block-'+block.header.number+'.ksi';
-			helper.saveSignature( filename, signature );
+	logger.debug('Registering for block events.');
+	signaturePromise = new Promise( function( resolveSignature, rejectSignature ){
+		args.events.forEach((eh) => {
+			eh.registerBlockEvent( (block) => {
+				//logger.info('Block ',block.header.number,' came back with hash: ',block.header.data_hash);
+				var metadata = block.metadata.metadata;
+				var signature = metadata[4];
+				//logger.info('   signature : ', signature );
+				var filename = 'block-'+block.header.number+'.ksi';
+				helper.saveFile( filename, signature ).then( function(){
+					resolveSignature(filename);
+				});
+			});
 		});
 	});
 
@@ -93,6 +89,7 @@ helper.init().then( function(args) {
 }).then( function(transactionResult) {
 	if( transactionResult.status === 'SUCCESS' ){
 		logger.info('move() transaction completed successfully.');
+		logger.info('waiting for the signature containing the transaction\'s block hash.');
 	}else{
 		logger.error('Invocation transaction was rejected.');
 		throw new Error('Invocation transaction was rejected.');
@@ -101,7 +98,7 @@ helper.init().then( function(args) {
 		//eventhub.disconnect();
 		logger.error(err.stack ? err.stack : err);
 }).then( function() {
-	return helper.sleep(20000);
+	return Promise.all( [ signaturePromise ] );
 }).then( function() {
 	cleanup();
 });

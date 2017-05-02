@@ -19,6 +19,7 @@ logger.setLevel('INFO');
 var chain;
 var cleanup;
 var client;
+var instantiateConfirmation;
 
 if (!process.env.GOPATH){
 	process.env.GOPATH = config.goPath;
@@ -36,13 +37,13 @@ helper.init().then( function(args) {
 	var nonce = utils.getNonce();
 	var txId = hfc.buildTransactionID(nonce, args.user);
 
-	logger.info('Registering for install events from '+txId+'.');
-	args.events.forEach((eh) => {
-		eh.registerTxEvent(txId.toString(), (tx, code) => {
-			logger.info('Install Transaction event came back with code: ',code);
-			eh.unregisterTxEvent(txId);
-		});
-	});
+	// logger.info('Registering for install events from '+txId+'.');
+	// args.events.forEach((eh) => {
+	// 	eh.registerTxEvent(txId.toString(), (tx, code) => {
+	// 		logger.info('Install Transaction event came back with code: ',code);
+	// 		eh.unregisterTxEvent(txId);
+	// 	});
+	// });
 
 	var request = {
 		targets: args.peers,
@@ -79,14 +80,6 @@ helper.init().then( function(args) {
 	var nonce = utils.getNonce();
 	var txId = hfc.buildTransactionID(nonce, args.user);
 
-	logger.info('Registering for instantiation events from '+txId+'.');
-	args.events.forEach((eh) => {
-		eh.registerTxEvent(txId.toString(), (tx, code) => {
-			logger.info('Instantiation Transaction event came back with code: ',code);
-			logger.info('tx: ', tx);
-			eh.unregisterTxEvent(txId);
-		});
-	});
 	var request = {
 		chaincodePath: config.chaincodePath,
 		chaincodeId: config.chaincodeID,
@@ -99,31 +92,47 @@ helper.init().then( function(args) {
 	};
 
 	logger.debug('Time to send the Instantiate Proposal.');
-	return chain.sendInstantiateProposal(request);
+	return chain.sendInstantiateProposal(request).then( function(results){
+		var proposalResponses = results[0];
+		var proposal = results[1];
+		var header = results[2];
+		proposalResponses.forEach( function(reply){
+			logger.debug(util.format(reply));
+			var response = reply.response;
+			if (!response || response.status !== 200) {
+				throw new Error('Failed: the proposal to instantiate the Chaincode was rejected.');
+			}
+		});
+		logger.debug('Acquired endorsement for the Chaincode Instantiation.');
 
-}).then( function(results) {
-	var proposalResponses = results[0];
-	var proposal = results[1];
-	var header = results[2];
-	proposalResponses.forEach( function(reply){
-		logger.debug(util.format(reply));
-		var response = reply.response;
-		if (!response || response.status !== 200) {
-			throw new Error('Failed: the proposal to instantiate the Chaincode was rejected.');
-		}
+		logger.debug('Registering for instantiation events from '+txId+'.');
+		instantiateConfirmation = new Promise( function( resolve, reject ){
+			args.events.forEach((eh) => {
+				eh.registerTxEvent(txId.toString(), (tx, code) => {
+					logger.debug('Instantiation Transaction event came back with code: ',code);
+					logger.debug('tx: ', tx);
+					eh.unregisterTxEvent(txId);
+					if( code === 'VALID' ){
+						resolve();
+					}else{
+						reject('Instantiation code was '+code);
+					}
+				});
+			});
+		});
+		
+		logger.debug('Time to send the instantiation transaction.');
+		var request = {
+			proposalResponses: proposalResponses,
+			proposal: proposal,
+			header: header
+		};
+		return chain.sendTransaction(request);
 	});
-	logger.debug('Acquired endorsement for the Chaincode Instantiation.');
-	
-	var request = {
-		proposalResponses: proposalResponses,
-		proposal: proposal,
-		header: header
-	};
-	return chain.sendTransaction(request);
 
 }).then( function(transactionResult) {
 	if( transactionResult.status === 'SUCCESS' ){
-		logger.info('Chaincode instantiation succeeded.');
+		logger.info('Chaincode instantiation approved.');
 	}else{
 		logger.error('Instantion transaction was rejected.');
 		throw new Error('Instantion transaction was rejected.');
@@ -131,9 +140,10 @@ helper.init().then( function(args) {
 }).catch( function(err) {
 		logger.error(err.stack ? err.stack : err);
 }).then( function() {
-	logger.info('sleeping for 30');
-	return helper.sleep(30000);
+	logger.info('Waiting for confirmation of chaincode instantiation.');
+	return Promise.all( [ instantiateConfirmation ] );
 }).then( function() {
+	logger.info('Received confirmation of chaincode instantiation.');
 	cleanup();
 });
 

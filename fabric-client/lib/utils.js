@@ -257,7 +257,7 @@ module.exports.getLogger = function(name) {
 
 	var logger = newDefaultLogger();
 	saveLogger(logger);
-	logger.info('Returning a new winston logger with default configurations');
+	logger.debug('Returning a new winston logger with default configurations');
 	return insertLoggerName(logger, name);
 };
 

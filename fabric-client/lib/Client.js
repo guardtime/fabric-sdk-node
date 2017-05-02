@@ -720,10 +720,10 @@ var Client = class {
 				})
 			.then(function(data) {
 				if (data) {
-					logger.info('Successfully loaded user "%s" from local key value store', name);
+					logger.debug('Successfully loaded user "%s" from local key value store', name);
 					return resolve(data);
 				} else {
-					logger.info('Failed to load user "%s" from local key value store', name);
+					logger.debug('Failed to load user "%s" from local key value store', name);
 					return resolve(null);
 				}
 			}).catch(

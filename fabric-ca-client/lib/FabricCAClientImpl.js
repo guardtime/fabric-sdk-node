@@ -69,7 +69,7 @@ var FabricCAServices = class {
 			tlsOptions: tlsOptions
 		}, this.cryptoPrimitives);
 
-		logger.info('Successfully constructed Fabric CA service client: endpoint - %j', endpoint);
+		logger.debug('Successfully constructed Fabric CA service client: endpoint - %j', endpoint);
 
 	}
 
@@ -382,7 +382,7 @@ var FabricCAClient = class {
 
 		this._cryptoPrimitives = cryptoPrimitives;
 
-		logger.info('Successfully constructed Fabric CA client from options - %j', connect_opts);
+		logger.debug('Successfully constructed Fabric CA client from options - %j', connect_opts);
 	}
 
 	/**
